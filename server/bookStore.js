@@ -46,9 +46,10 @@ export async function compareBooks(title,author,exludedId = null){
     await delay();
     const t = title.trim().toLowerCase();
     const a = author.trim().toLowerCase();
-    return books.find((b)=> b.id !== exludedId &&
+    return (books.find((b)=> b.id !== exludedId &&
     b.title.trim().toLowerCase() === t &&
-    b.author.trim().toLowerCase() === a) ?? null;
+    b.author.trim().toLowerCase() === a) ?? null );
+    
 }
 
 
