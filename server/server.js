@@ -1,16 +1,86 @@
 import express from "express";
 import cors from "cors";
-import { validateBook } from "./validate.js";
+import { validateBook,genres } from "./validate.js";
 import { getAllBooks,getBookById,addBook,updateBook,deleteBook,compareBooks } from "./bookStore.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 app.use(cors({ origin: CLIENT_ORIGIN }));
 app.use(express.json());
+
+function parseId(raw){
+const id = Number(raw);
+if(Number.isInteger(id) && id > 0 && String(id) === raw){
+    return id;
+}
+return null;
+}
 const duplicateMsg = "A book cannot be copied.";
 
 app.get('/api/books',async(req,res)=>{
-    res.json(await getAllBooks());
+    const {genre,read,q,sort,order,limit,page} = req.query;
+    for(const value of Object.values(req.query)){
+     if(typeof value !== 'string'){
+        return res.status(400).json({error : 'query cannot be repeated'});
+     }
+    }
+    if(genre !== undefined && !genres.includes(genre)){
+        return res.status(400).json({error : `Genre must be one of : ${genres.join(',')}`});
+    }
+    if (read !== undefined && read !== 'true' && read !== 'false') {
+    return res.status(400).json({ error: 'read must be true or false' });
+  }
+   const sortBy = sort ?? 'id';
+   if(!['id','title','author','yeaar','rating'].includes(sortBy)){
+    return res.status(400).json({error: "Sorting must be done correctly."});
+   }
+
+   const sortOrder = sort ?? 'asc';
+   if(sortOrder == 'asc' && sortOrder == 'desc'){
+    return res.status(400).json({error: "Sorting either asc or desc"});
+   }
+   let pageSize =  50;
+   if(limit !== undefined){
+    pageSize = Number(limit);
+    if(!Number.isInteger(pageSize)  || limit < 1 || limit > 50){
+        return res.status(400).json({error:"Limit is between 1 and 50" });
+    }
+}
+let pageNumber = 1;
+if(page !== undefined){
+    pageNumber = Number(page);
+    if(!Number.isInteger(pageNumber) || pageNumber < 1){
+        return res.status(400).json({error: "Page cannot be smaller than 1"});
+    }
+}
+
+let result = await getAllBooks();
+if (genre !== undefined) {
+    result = result.filter((b) => b.genre === genre);
+  }
+  if (read !== undefined) {
+    result = result.filter((b) => b.read === (read === 'true'));
+  }
+  if (q !== undefined && q.trim() !== '') {
+    const text = q.trim().toLowerCase();
+    result = result.filter(
+      (b) => b.title.toLowerCase().includes(text) || b.author.toLowerCase().includes(text)
+    );
+  }
+ const direction = sortOrder === 'desc' ? -1 : 1;
+ result = [...result].sort((a,b) => {
+if (sortBy === 'rating'){
+    if(a.rating === null && b.rating === null) return 0;
+    if(a.rating === null) return 1;
+    if(b.rating === null) return -1;
+}
+if(typeof a[sortBy] === 'string'){
+    return a[sortBy].localeCompare(b[sortBy])* direction;
+}
+return (a[sortBy] - b[sortBy]) * direction; 
+ });
+const start  = (pageNumber - 1) * pageSize;
+res.json(result.slice(start,start + pageSize));
 });
 
 app.get('/api/books/:id',async(req,res) =>{
