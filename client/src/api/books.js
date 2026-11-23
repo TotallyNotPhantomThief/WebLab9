@@ -23,9 +23,23 @@ return response.json();
 export function getBooks(filters,signal){
  const params = new URLSearchParams();
  for(const [key,value] of Object.entries(filters)){
-    if(value !== '') params
+    if(value !== '') params.set(key,value);
  }
-
-
-
+const query = params.toString();
+return request (`/api/books${query ?` ?${query}` : ''}`,{signal});
+}
+export function getStats(signal){
+    return request('/api/stats', {signal});
+}
+export function createBooks(book){
+    return request('/api/books', {method: 'POST', body:book});
+}
+export function replaceBooks(id,book){
+    return request(`/api/books/${id}`,{method: 'PUT', body:'book'});
+}
+export function updateBook(id,changed){
+    return request(`/api/books/${id}`, {method: 'PATCH', body: changed});
+}
+export function deleteBook(id){
+    return request(`/api/books/${id}`, {method: 'DELETE'});
 }
