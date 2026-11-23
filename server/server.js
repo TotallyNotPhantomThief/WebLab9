@@ -36,3 +36,59 @@ app.post('/api/books', async(req,res) =>{
     const create = await addBook(book);
     res.status(201).location(`/api/books/${created.id}`).json(create);
 });
+
+app.put('/api/books/:id', async(req,res) => {
+    const id = parseId(req.params.id);
+    if(id === null){
+        return res.status(400).json({error : "Id must be positive"});
+    }
+    const exist = await getBookById(id);
+    if(!exist){
+        return res.status(404).json({error: "No book with that id"});
+    }
+
+    const  {errors,book} = validateBook(req.body);
+    if(errors.length > 0){
+        return res.status(400).json({error: errors.join(';')});
+    }
+    if(await compareBooks(book.title,book.author, id)){
+       return res.status(409).json({error: "It already exists"});
+    }
+    res.json(await updateBook(id,book));
+});
+
+app.patch('/api/books/:id', async(req,res)=>{
+const id = parseId(req.params.id);
+if( id === null){
+    return res.status(400).json({error: "Id must be positive"});
+}
+const exist = await getBookById(id);
+if(!exist){
+    return res.status(404).json({error: "No book with that id exists"});
+}
+const {errors,book} = validateBook({...exist,...req.body});
+if(errors.length > 0){
+    return res.status(400).json({error : errors.join(';')});
+}
+if (await compareBooks(book.title, book.author, id)){
+    return res.status(409).json({error : duplicateMsg});
+}
+ res.json(await updateBook(id,book))
+});
+
+app.delete('/api/books/:id', async(req,res)=>{
+const id = parseId(req.params.id);
+if(id === null){
+    return res.status(400).json({error: "Id must be postitive"});
+}
+
+const deleted = await deleteBook(id);
+if(!deleted){
+    return res.status(404).json({error: "No book like that here"});
+}
+res.status(204).end();
+});
+
+
+
+
