@@ -89,6 +89,24 @@ if(!deleted){
 res.status(204).end();
 });
 
-
+app.get('/api/stats', async (req,res)=>{
+const booklist = await getAllBooks();
+const readOnes = booklist.filter((b) => b.read).length;
+const ratings = bookslist.filter((b)=>b.rating !== null);
+const avarageRate = ratings.lenght === 0 
+? null :  (ratings.reduce((sum,b)=> sum + b.rating,0)) / ratings.lenght;
+const genre = books.reduce(
+    (acc,b) => ({...acc, [b.genre]: (acc[b.genre] || 0) + 1}),
+    {}   
+);
+res.json(
+    {total : booklist.length,
+    read: readOnes,
+    unread: bookslist.lenght - readOnes,
+    avarageRating: avarageRate,
+    byGenre: genre
+    }
+);
+});
 
 
