@@ -1,122 +1,123 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { getBooks, getStats, createBook, replaceBook, updateBook, deleteBook } from './api/books.js';
+import Filters from './components/Filters.jsx';
+import BookList from './components/BookList.jsx';
+import BookForm from './components/BookForm.jsx';
+import Stats from './components/Stats.jsx';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [books, setBooks] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [filters, setFilters] = useState({ q: '', genre: '', read: '', sort: '', order: 'asc' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0); 
+
+  
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError('');
+
+    getBooks(filters, controller.signal)
+      .then((data) => {
+        setBooks(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError') return; 
+        setError(err.message);
+        setLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [filters, refreshKey]);
+
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    getStats(controller.signal)
+      .then(setStats)
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        setStats(null);
+      });
+
+    return () => controller.abort();
+  }, [refreshKey]);
+
+ 
+  async function runAction(action) {
+    setBusy(true);
+    setActionError('');
+    try {
+      await action();
+      setRefreshKey((k) => k + 1);
+      return true;
+    } catch (err) {
+      setActionError(err.message);
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSave(data) {
+    const ok = await runAction(() =>
+      editing ? replaceBook(editing.id, data) : createBook(data)
+    );
+    if (ok) setEditing(null);
+    return ok;
+  }
+
+  function handleToggleRead(book) {
+
+    const changes = book.read ? { read: false, rating: null } : { read: true };
+    runAction(() => updateBook(book.id, changes));
+  }
+
+  function handleRate(book, value) {
+    runAction(() => updateBook(book.id, { rating: value === '' ? null : Number(value) }));
+  }
+
+  async function handleDelete(book) {
+    if (!window.confirm(`Delete "${book.title}"?`)) return;
+    const ok = await runAction(() => deleteBook(book.id));
+    if (ok && editing?.id === book.id) setEditing(null);
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div>
+      <h1>Reading List</h1>
 
-      <div className="ticks"></div>
+      <Stats stats={stats} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <BookForm
+        key={editing ? editing.id : 'new'}
+        book={editing}
+        saving={busy}
+        onSave={handleSave}
+        onCancel={() => setEditing(null)}
+      />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {actionError && <p role="alert">Error: {actionError}</p>}
+
+      <Filters filters={filters} onChange={setFilters} />
+
+      <BookList
+        books={books}
+        loading={loading}
+        error={error}
+        busy={busy}
+        onToggleRead={handleToggleRead}
+        onRate={handleRate}
+        onEdit={setEditing}
+        onDelete={handleDelete}
+      />
+    </div>
+  );
 }
-
-export default App
