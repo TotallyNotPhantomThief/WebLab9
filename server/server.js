@@ -47,17 +47,17 @@ app.get('/api/books',async(req,res)=>{
     if(!Number.isInteger(pageSize)  || limit < 1 || limit > 50){
         return res.status(400).json({error:"Limit is between 1 and 50" });
     }
-}
-let pageNumber = 1;
-if(page !== undefined){
+ }
+ let pageNumber = 1;
+ if(page !== undefined){
     pageNumber = Number(page);
     if(!Number.isInteger(pageNumber) || pageNumber < 1){
         return res.status(400).json({error: "Page cannot be smaller than 1"});
     }
-}
+ }
 
-let result = await getAllBooks();
-if (genre !== undefined) {
+ let result = await getAllBooks();
+ if (genre !== undefined) {
     result = result.filter((b) => b.genre === genre);
   }
   if (read !== undefined) {
@@ -71,15 +71,15 @@ if (genre !== undefined) {
   }
  const direction = sortOrder === 'desc' ? -1 : 1;
  result = [...result].sort((a,b) => {
-if (sortBy === 'rating'){
+ if (sortBy === 'rating'){
     if(a.rating === null && b.rating === null) return 0;
     if(a.rating === null) return 1;
     if(b.rating === null) return -1;
-}
-if(typeof a[sortBy] === 'string'){
+ }
+ if(typeof a[sortBy] === 'string'){
     return a[sortBy].localeCompare(b[sortBy])* direction;
-}
-return (a[sortBy] - b[sortBy]) * direction; 
+ }
+ return (a[sortBy] - b[sortBy]) * direction; 
  });
 const start  = (pageNumber - 1) * pageSize;
 res.json(result.slice(start,start + pageSize));
@@ -193,5 +193,5 @@ app.use((err,req,res,next) =>{
     }
 console.error(err);
 res.status(500).json({error: "Somting went wrong"});
-})
+});
 

@@ -84,3 +84,51 @@ Keep-Alive: timeout=5
 {"error":"No book like that here"}
 
 followed by a 404 for the same delete repeated
+
+
+
+
+README: Reasoning Questions
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4.
+Put is better used where chaning the whole item instead of little things where Patch is better used for little change.
+
+
+
+
+
+
+
+6.
+If the page were opened directly from disk, its origin would be file://, so a
+relative URL like /api/books would resolve to file:///api/books, which does not
+exist, and nothing would reach the API.
+
+
+7.
+It got reseted.
