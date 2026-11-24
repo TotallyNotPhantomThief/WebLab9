@@ -1,4 +1,4 @@
-const genres = ["Fantasy","Fiction","DNon-Fiction","History","Science","Other"];
+ export const genres = ["Fantasy","Fiction","DNon-Fiction","History","Science","Other"];
 
 
 export function validateBook(book){

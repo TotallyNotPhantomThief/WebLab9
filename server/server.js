@@ -7,7 +7,9 @@ const PORT = process.env.PORT || 3000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 app.use(cors({ origin: CLIENT_ORIGIN }));
 app.use(express.json());
-
+app.listen(PORT, () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+});
 function parseId(raw){
 const id = Number(raw);
 if(Number.isInteger(id) && id > 0 && String(id) === raw){
