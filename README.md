@@ -132,3 +132,18 @@ exist, and nothing would reach the API.
 
 7.
 It got reseted.
+
+
+
+Self search:
+
+URLSEARCHPARAMS:
+it makes it easy to handle url query strings.
+LOCALCOMPARE:
+compares to strings and sorts them with handling language conventions.
+
+204 NO CONTENT:
+using res.status(204).end()
+
+
+
