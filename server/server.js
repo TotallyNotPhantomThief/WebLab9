@@ -1,10 +1,12 @@
 import express from "express";
 import cors from "cors";
 import { validateBook,genres } from "./validate.js";
+import mongoose from 'mongoose';
 import { getAllBooks,getBookById,addBook,updateBook,deleteBook,compareBooks } from "./bookStore.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/readinglist';
 app.use(cors({ origin: CLIENT_ORIGIN }));
 app.use(express.json());
 app.listen(PORT, () => {
@@ -195,3 +197,16 @@ console.error(err);
 res.status(500).json({error: "Somting went wrong"});
 });
 
+async function start() {
+    try{
+        await mongoose.connect(MONGODB_URI,{serverSelectionTimeoutMS: 3000});
+        console.log('Connected to MongoDB');
+    } catch (err){
+        console.error(`Could not connect to MongoDB at ${MONGODB_URI}: ${err.message}`);
+        process.exit(1);
+    }
+    app.listen(PORT, ()=>{
+        console.log(`Server listening on port ${PORT}`);
+    });
+}
+start();
